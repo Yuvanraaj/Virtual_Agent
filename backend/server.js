@@ -3,6 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const WebSocket = require('ws');
+const fetch = require('node-fetch');
+const fs = require('fs');
+const path = require('path');
 
 // Only keep Anam-related routes for the simplified landing + demo app
 const anamRoute = require('./routes/anam');
@@ -18,7 +21,86 @@ app.use(express.urlencoded({ limit: '12mb', extended: true }));
 app.use('/api/anam', anamRoute);
 app.use('/api/anam-proxy', anamProxyWs);
 
-// No additional endpoints required for the trimmed backend. Anam routes handle session/token/engine logic.
+// Mount resume parser route
+try {
+  const resumeRoute = require('./routes/resume-parse');
+  app.use('/api/parse-resume', resumeRoute);
+  console.log('[INIT] Mounted /api/parse-resume route');
+} catch (e) {
+  console.warn('[INIT] Could not mount resume-parse route:', e.message);
+}
+
+// Ensure uploads directory exists for multer
+try {
+  const uploadsDir = path.join(__dirname, 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('[INIT] Created uploads directory at', uploadsDir);
+  }
+} catch (e) {
+  console.warn('[INIT] Failed to ensure uploads directory:', e.message);
+}
+
+// --- OpenAI Proxy Route ---
+app.post('/api/openai-proxy', async (req, res) => {
+  try {
+    // Log the API key (masked) to debug
+    const apiKey = process.env.OPENAI_API_KEY;
+    console.log('OpenAI API Key:', apiKey ? `${apiKey.substring(0, 5)}...` : 'Not set');
+    
+    if (!apiKey) {
+      return res.status(500).json({ error: 'OpenAI API key not found in environment variables' });
+    }
+    
+    const { stream, ...requestBody } = req.body;
+    
+    // If streaming is requested, set up SSE
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...requestBody,
+          stream: true
+        })
+      });
+      
+      if (!response.ok) {
+        console.error(`OpenAI API error: ${response.status} ${response.statusText}`);
+        res.write(`data: ${JSON.stringify({ error: `OpenAI API error: ${response.status}` })}\n\n`);
+        res.end();
+        return;
+      }
+      
+      // Forward the stream to the client
+      response.body.pipe(res);
+    } else {
+      // Non-streaming request
+      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      const data = await resp.json();
+      res.status(resp.status).json(data);
+    }
+  } catch (err) {
+    console.error('OpenAI proxy error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+    // (App and Anam routes were already mounted above; no duplicate declarations here.)
 
 const DEFAULT_PORT = process.env.PORT || 8001;
 function startServer(port) {

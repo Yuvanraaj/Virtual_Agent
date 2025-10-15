@@ -2,8 +2,11 @@ import React from 'react';
 import { Switch, Route } from "wouter";
 import LandingPage from "./components/LandingPage";
 import Navbar from "./components/Navbar";
-import StartDemo from "./pages/StartDemo";
+import SelectMode from "./pages/SelectMode";
 import AgentPage from "./pages/Agent";
+import ResumeParse from "./pages/ResumeParse";
+import Chatbot from "./pages/Chatbot";
+
 
 function Router() {
   return (
@@ -11,8 +14,10 @@ function Router() {
       <Navbar />
       <Switch>
         <Route path="/" component={LandingPage} />
-        <Route path="/start" component={StartDemo} />
-    <Route path="/agent" component={AgentPage} />
+        <Route path="/start" component={SelectMode} />
+        <Route path="/agent" component={AgentPage} />
+        <Route path="/resume-parse" component={ResumeParse} />
+        <Route path="/chatbot" component={Chatbot} />
       </Switch>
     </div>
   );

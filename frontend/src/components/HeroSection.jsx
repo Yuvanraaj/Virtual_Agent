@@ -29,23 +29,13 @@ export default function HeroSection() {
           Practice with Lana AI, your AI interview coach. Get personalized feedback, improve your answers, and build confidence for your next interview.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="flex items-center justify-center">
           <Button
             size="lg"
             onClick={handleStartDemo}
-            className="accent-btn font-semibold px-8 py-6 h-auto text-lg"
+            className="accent-btn font-semibold px-10 py-6 h-auto text-lg"
           >
             Start Demo
-          </Button>
-
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={handleWatchDemo}
-            className="border-2 border-[rgba(44,154,255,0.12)] text-[var(--text-primary)] font-semibold px-8 py-6 h-auto text-lg"
-          >
-            <span className="mr-2">▶️</span>
-            Watch Demo
           </Button>
         </div>
       </div>
