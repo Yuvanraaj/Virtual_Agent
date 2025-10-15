@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { API_BASE_URL } from "../config";
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
@@ -25,8 +26,8 @@ export default function Chatbot() {
     setStreamingMessage("");
     
     try {
-      // Use streaming API
-      const response = await fetch("/api/openai-proxy", {
+  // Use streaming API via configured backend
+  const response = await fetch(`${API_BASE_URL}/api/openai-proxy`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

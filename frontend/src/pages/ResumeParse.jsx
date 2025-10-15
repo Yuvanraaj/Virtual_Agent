@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { API_BASE_URL } from "../config";
 
 export default function ResumeParse() {
   const [file, setFile] = useState(null);
@@ -42,7 +43,7 @@ export default function ResumeParse() {
     
     try {
       // First upload and extract text from the file
-      const res = await fetch("/api/parse-resume", {
+      const res = await fetch(`${API_BASE_URL}/api/parse-resume`, {
         method: "POST",
         body: formData,
       });
